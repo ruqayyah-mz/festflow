@@ -1,0 +1,107 @@
+{
+  "expo": {
+    "name": "FestFlow",
+    "slug": "festflow",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "festflow",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1d4ed8"
+    },
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "package": "dev.festflow.app",
+      "versionCode": 1,
+      "minSdkVersion": 26,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1d4ed8"
+      },
+      "googleServicesFile": "./google-services.json",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "WAKE_LOCK",
+        "POST_NOTIFICATIONS"
+      ],
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "festflow"
+            },
+            {
+              "scheme": "https",
+              "host": "festflow.dev",
+              "pathPrefix": "/invite"
+            }
+          ],
+          "category": ["BROWSABLE", "DEFAULT"]
+        }
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1d4ed8"
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TasksWidget",
+              "label": "FestFlow: Tasks",
+              "minWidth": "160dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 2,
+              "targetCellHeight": 2,
+              "description": "Interactive checklist of upcoming tasks for volunteers and sponsors",
+              "updatePeriodMillis": 900000
+            },
+            {
+              "name": "OrganizerProgressWidget",
+              "label": "FestFlow: Event Progress",
+              "minWidth": "250dp",
+              "minHeight": "70dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 1,
+              "description": "Live progress bar of completed tasks and active participant count",
+              "updatePeriodMillis": 900000
+            },
+            {
+              "name": "ParticipantAnnouncementsWidget",
+              "label": "FestFlow: Announcements",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "description": "Real-time feed of official announcements and deadline alerts",
+              "updatePeriodMillis": 900000
+            }
+          ]
+        }
+      ]
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "festflow-prod-uuid"
+      }
+    }
+  }
+}
+

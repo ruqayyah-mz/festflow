@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FestFlow Platform Update Report</title>
+<style>
+  :root {
+    --ink: #0f172a; --ink-2: #334155; --muted: #64748b; --line: #e2e8f0; --soft: #f8fafc;
+    --blue: #1d4ed8; --blue-soft: #eff6ff; --green: #047857; --green-soft: #ecfdf5;
+    --amber: #b45309; --amber-soft: #fffbeb; --red: #b91c1c; --red-soft: #fef2f2; --purple: #6d28d9; --purple-soft: #f5f3ff;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font: 12.5px/1.55 "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif; color: var(--ink-2); background: #fff; }
+  .page { max-width: 820px; margin: 0 auto; padding: 36px 40px; }
+  h1 { font-size: 26px; line-height: 1.2; color: var(--ink); letter-spacing: -0.02em; }
+  h2 { font-size: 16px; color: var(--ink); margin: 26px 0 10px; padding-bottom: 6px; border-bottom: 2px solid var(--ink); display: flex; gap: 10px; align-items: baseline; }
+  h2 .n { font: 600 11px ui-monospace, Consolas, monospace; color: var(--blue); }
+  h3 { font-size: 13px; color: var(--ink); margin: 14px 0 6px; }
+  p { margin: 6px 0; }
+  .eyebrow { font: 700 10px ui-monospace, Consolas, monospace; letter-spacing: .08em; color: var(--blue); background: var(--blue-soft); border: 1px solid #bfdbfe; padding: 3px 8px; display: inline-block; margin-bottom: 10px; }
+  .lead { font-size: 13.5px; color: var(--muted); margin-top: 8px; max-width: 680px; }
+  .meta { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 18px 0 4px; padding: 12px 0; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .meta div { font-size: 11.5px; } .meta b { display: block; font: 700 9.5px ui-monospace, Consolas, monospace; letter-spacing: .06em; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 12px 0; }
+  .stat { border: 1px solid var(--line); padding: 10px 12px; background: var(--soft); }
+  .stat .v { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.1; } .stat .l { font-size: 11px; color: var(--muted); }
+  ul { margin: 4px 0 4px 18px; } li { margin: 2px 0; }
+  ul.check { list-style: none; margin-left: 0; } ul.check li { padding-left: 18px; position: relative; }
+  ul.check li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 11.5px; }
+  th { text-align: left; font: 700 9.5px ui-monospace, Consolas, monospace; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); background: var(--soft); border-bottom: 1px solid var(--line); padding: 6px 8px; }
+  td { padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  td:first-child { font-weight: 600; color: var(--ink); }
+  code { font: 10.5px ui-monospace, Consolas, monospace; background: var(--soft); border: 1px solid var(--line); padding: 0 4px; color: #9f1239; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .card { border: 1px solid var(--line); padding: 12px 14px; break-inside: avoid; }
+  .card h3 { margin-top: 0; }
+  .tag { font: 700 9px ui-monospace, Consolas, monospace; padding: 1px 6px; border: 1px solid; display: inline-block; letter-spacing: .04em; }
+  .t-new { color: var(--green); background: var(--green-soft); border-color: #a7f3d0; }
+  .t-chg { color: var(--amber); background: var(--amber-soft); border-color: #fde68a; }
+  .t-fix { color: var(--red); background: var(--red-soft); border-color: #fecaca; }
+  .t-kept { color: var(--blue); background: var(--blue-soft); border-color: #bfdbfe; }
+  .note { border-left: 3px solid var(--amber); background: var(--amber-soft); padding: 8px 12px; margin: 10px 0; font-size: 12px; }
+  .flow { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; margin: 6px 0; font-size: 11.5px; }
+  .flow span { border: 1px solid var(--line); background: var(--soft); padding: 2px 8px; }
+  .flow i { color: var(--muted); font-style: normal; }
+  .small { font-size: 11px; color: var(--muted); }
+  footer { margin-top: 28px; padding-top: 10px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; font-size: 10.5px; color: var(--muted); }
+  section, .card, table, tr { break-inside: avoid; }
+  h2 { break-after: avoid; }
+  @page { size: A4; margin: 14mm 12mm; }
+  @media print { .page { padding: 0; max-width: none; } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <span class="eyebrow">PLATFORM UPDATE REPORT</span>
+  <h1>FestFlow — What We Built</h1>
+  <p class="lead">A plain-language summary of every change made to FestFlow across both sessions: organizer setup, volunteers, participants, judging, the rules the system now enforces, and the bugs we fixed along the way.</p>
+
+  <div class="meta">
+    <div><b>Project</b>FestFlow web app (React 19 / TypeScript)</div>
+    <div><b>Covers</b>Organizer · Volunteer · Participant · Judge</div>
+    <div><b>Date</b>November 7, 2026</div>
+    <div><b>Status</b><span style="color:var(--green);font-weight:600">Built, tested, building cleanly</span></div>
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="v">4</div><div class="l">roles with a full event workspace</div></div>
+    <div class="stat"><div class="v">11</div><div class="l">bugs found &amp; fixed</div></div>
+    <div class="stat"><div class="v">23</div><div class="l">automated rule checks, all passing</div></div>
+    <div class="stat"><div class="v">8</div><div class="l">end-to-end browser test runs (Edge)</div></div>
+  </div>
+
+  <h2><span class="n">01</span>Status of the earlier report</h2>
+  <p>The previous report (sidebar navigation, QR attendance, onboarding policies, tables &amp; submissions) is still the foundation. These parts changed since:</p>
+  <table>
+    <tr><th style="width:30%">Earlier item</th><th style="width:14%">Now</th><th>What changed</th></tr>
+    <tr><td>Organizer left sidebar (6 tabs)</td><td><span class="tag t-kept">KEPT</span></td><td>Same structure. Volunteers and participants now get the same "event workspace" sidebar pattern.</td></tr>
+    <tr><td>Simulated camera scanner</td><td><span class="tag t-chg">REPLACED</span></td><td>Real camera scanning now reads QR codes live (needs HTTPS or localhost). Roster and manual-code modes are still there.</td></tr>
+    <tr><td>Volunteer start-lock</td><td><span class="tag t-chg">EXTENDED</span></td><td>Pending applications now show as <i>expired</i> at event start instead of hanging forever. Organizers can also set deadlines and close sign-ups early.</td></tr>
+    <tr><td><code>ParticipantTeamPage.tsx</code> badge</td><td><span class="tag t-chg">MOVED</span></td><td>Page removed. The team badge (now a real QR) lives in the participant's event <b>Overview</b>.</td></tr>
+    <tr><td><code>VolunteerRolePage.tsx</code> badge</td><td><span class="tag t-chg">UPGRADED</span></td><td>Now the event's <b>My Profile</b> tab, with a real QR code and the volunteer's experience.</td></tr>
+    <tr><td>"Rubric weights, live grading matrix"</td><td><span class="tag t-chg">REPLACED</span></td><td>Replaced by organizer-defined criteria and a weighted <b>Leaderboard</b> (section 05).</td></tr>
+  </table>
+
+  <h2><span class="n">02</span>Creating an event (organizer)</h2>
+  <p>Create and Edit Event now cover everything needed to run the event:</p>
+  <table>
+    <tr><th style="width:26%">Setting</th><th>Options &amp; rules</th></tr>
+    <tr><td>Event type</td><td>Hackathon, Competition, Workshop, Conference/Talk, Meetup, Cultural, Sports, Fun/Social, Other. Shown as a badge and used for filters.</td></tr>
+    <tr><td>Participation</td><td><b>Solo</b> or <b>Teams</b> with min/max size (validated, max 10). Can't switch solo↔team once people register.</td></tr>
+    <tr><td>Location</td><td><b>Online</b> (venue becomes a meeting link; no QR check-in) or <b>In person</b>.</td></tr>
+    <tr><td>Registration windows</td><td>Separate optional <b>deadlines</b> plus a <b>"Close now"</b> switch for participants and volunteers. With no deadline, both close when the event starts.</td></tr>
+    <tr><td>Evaluation rounds</td><td>Round weights must total <b>exactly 100%</b>. A live total turns red and blocks saving otherwise.</td></tr>
+    <tr><td>Volunteer recruitment</td><td>Private links (one per role) or open applications using a <b>custom application form</b> (Google Forms–style: short answer, paragraph, multiple choice, required).</td></tr>
+  </table>
+
+  <h2><span class="n">03</span>Running an event (organizer workspace)</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Participants tab</h3>
+      <ul class="check">
+        <li><b>Applications panel:</b> accept or reject teams and solo entrants.</li>
+        <li>Rosters, tables, check-in and stats count <b>accepted</b> teams only.</li>
+        <li>Registration open/close switch with the closing date.</li>
+        <li>Submissions show screenshots, links, tags and technologies.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Volunteers tab</h3>
+      <ul class="check">
+        <li>Applications show form answers, the volunteer's <b>profile</b> and FestFlow history.</li>
+        <li>Task status is <b>read-only</b> for organizers (volunteers update it). Organizers <b>Verify</b> finished tasks.</li>
+        <li>"General" tasks can be claimed by any volunteer.</li>
+        <li>Application close switch; real-camera QR check-in.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>Judging tab</h3>
+      <ul class="check">
+        <li><b>Criteria editor:</b> name each criterion and its points. Must total 100.</li>
+        <li><b>Leaderboard:</b> per-round judge averages, weighted final out of 100, medals, tie ranks, track filter, "partial" flags.</li>
+        <li>Judge links scoped by table and a real track (dropdown).</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>After the event ends</h3>
+      <ul class="check">
+        <li>Everything becomes <b>read-only</b>, enforced in the data layer too.</li>
+        <li><b>Download Report:</b> stats, final standings, teams, volunteers, sponsors, tasks and the attendance log.</li>
+        <li>Task progress shows 100%.</li>
+        <li>Organizers get notifications for new applications.</li>
+      </ul>
+    </div>
+  </div>
+
+  <h2><span class="n">04</span>Volunteers &amp; participants</h2>
+  <h3>Volunteer journey</h3>
+  <div class="flow"><span>Browse Events (type filter)</span><i>→</i><span>Fill organizer's form</span><i>→</i><span>Accepted (notified)</span><i>→</i><span>My Events: ongoing / upcoming / past</span><i>→</i><span>Event: Tasks · Announcements · My Profile (QR)</span></div>
+  <ul>
+    <li><b>Join by link:</b> paste a private invite link (or token) on the dashboard to join a "My Team" event directly. No approval needed, since the link is the approval.</li>
+    <li><b>Tasks:</b> take up open tasks, update status, release unfinished ones, and see "Awaiting verification" or "Verified".</li>
+    <li><b>My Profile</b> (sidebar): a proper profile page (headline, about, skills, roles, languages, experience timeline) with an <b>Edit</b> button. First-timers still have something to show.</li>
+    <li>Notification banner for decisions, new tasks, verifications and announcements.</li>
+  </ul>
+  <h3>Participant journey</h3>
+  <div class="flow"><span>Explore Events (type filter)</span><i>→</i><span>Register</span><i>→</i><span>Create / join / open team</span><i>→</i><span>Lead submits application</span><i>→</i><span>Accepted</span><i>→</i><span>Submit project</span></div>
+  <ul>
+    <li><b>Event workspace:</b> Overview (event details + My Team), Submission, Announcements.</li>
+    <li><b>Teams:</b> join by code or click <b>"Join this team"</b> on teams marked <i>open to new members</i>. The lead can remove members; anyone can leave; you can unregister.</li>
+    <li><b>Solo events:</b> registering is the application. No team screens.</li>
+    <li><b>Submission:</b> project name, up to 5 images (auto-compressed), YouTube / website / repo links, description, tags, technologies, additional info.</li>
+    <li>Participants <b>never see scores or rankings</b>. Results are organizer- and judge-only.</li>
+  </ul>
+
+  <h2><span class="n">05</span>Judging &amp; the scoring math</h2>
+  <div class="grid2">
+    <div class="card">
+      <h3>Judge portal</h3>
+      <ul class="check">
+        <li>One <b>tab per round</b>, with progress (scored / total) and the current round marked.</li>
+        <li>Each criterion is scored 0 to its own max; totals are out of 100.</li>
+        <li><b>Save</b> button per project, plus autosave. Edits are never lost on leaving.</li>
+        <li>Offline queue syncs when the connection returns.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h3>How the final score works</h3>
+      <p><b>1.</b> Each mark → % of what it was scored out of.<br>
+         <b>2.</b> Average the judges' % for each round.<br>
+         <b>3.</b> Final = Σ (round average × round weight).</p>
+      <p class="small">Example: 89/100 in a 35% round contributes 31.2 points. Scores are recalculated and capped on the data side, so a tampered screen can't inflate them.</p>
+    </div>
+  </div>
+
+  <h2><span class="n">06</span>Rules the system now enforces</h2>
+  <p class="small">All of these are checked in the data layer, not only hidden in the UI.</p>
+  <table>
+    <tr><th style="width:34%">Rule</th><th>Effect</th></tr>
+    <tr><td>Past events are read-only</td><td>Every write is refused once an event ends (31 checks across all write paths).</td></tr>
+    <tr><td>No double roles</td><td>Nobody can be a participant and a volunteer at the same event.</td></tr>
+    <tr><td>Team limits</td><td>Full teams can't be joined; teams below the minimum can't apply or submit; one team per person per event.</td></tr>
+    <tr><td>Approval before submitting</td><td>Only accepted teams or entrants can submit, check in or be judged.</td></tr>
+    <tr><td>Sign-up windows</td><td>Deadlines and "Close now" stop new registrations, applications and invite joins (invites still work during a live event unless closed).</td></tr>
+    <tr><td>Totals of exactly 100</td><td>Round weights and judging criteria both must add up to 100.</td></tr>
+    <tr><td>Who changes what</td><td>Only the assignee updates a task; only organizers verify; only team leads apply or remove members.</td></tr>
+  </table>
+
+  <h2><span class="n">07</span>Bugs found &amp; fixed</h2>
+  <table>
+    <tr><th style="width:36%">Bug</th><th>Impact before the fix</th></tr>
+    <tr><td>Create Event stuck "buffering"</td><td>Form library (resolvers v3) couldn't read zod 4 errors. Any invalid field froze the form. Upgraded to v5.</td></tr>
+    <tr><td>Joining a team wiped other teams</td><td>Saved only the current event's teams over the whole list, deleting every other event's teams.</td></tr>
+    <tr><td>Duplicate IDs</td><td>Records created in the same millisecond (events, roles, profiles) overwrote each other.</td></tr>
+    <tr><td>Leaderboard math</td><td>Marks out of 70 were treated as out of 100, which under-scored every project.</td></tr>
+    <tr><td>Judges saw zero projects</td><td>A free-text track ("AI &amp; Web3 Systems") matched no real track.</td></tr>
+    <tr><td>Edit Event shifted times</td><td>UTC vs local time: each save moved the event by the timezone offset.</td></tr>
+    <tr><td>Unsubmittable volunteer form</td><td>A required role question with no roles blocked submit silently.</td></tr>
+    <tr><td>Participants could volunteer</td><td>The invite page turned whoever was logged in (even a participant) into a volunteer.</td></tr>
+    <tr><td>Invites broke on live events</td><td>Private invites stopped working once the event started. Now they only stop when closed.</td></tr>
+    <tr><td>Stuck applications</td><td>Pending applications hung forever once the event started.</td></tr>
+    <tr><td>Broken Cancel link</td><td>Edit Event "Cancel" pointed to a page that doesn't exist, bouncing organizers to the landing page.</td></tr>
+  </table>
+
+  <h2><span class="n">08</span>Where things live (routes)</h2>
+  <table>
+    <tr><th style="width:18%">Role</th><th>Main pages</th></tr>
+    <tr><td>Organizer</td><td><code>/organizer</code> · <code>/organizer/events/new</code> · <code>/organizer/events/:id</code> + <code>/volunteers</code> <code>/participants</code> <code>/judging</code> <code>/sponsorships</code> <code>/announcements</code> <code>/edit</code></td></tr>
+    <tr><td>Volunteer</td><td><code>/volunteer</code> (browse) · <code>/volunteer/my-events</code> · <code>/volunteer/profile</code> · <code>/volunteer/events/:id</code> + <code>/announcements</code> <code>/profile</code></td></tr>
+    <tr><td>Participant</td><td><code>/participant</code> (explore) · <code>/participant/my-events</code> · <code>/participant/events/:id</code> + <code>/submission</code> <code>/announcements</code></td></tr>
+    <tr><td>Judge</td><td><code>/judge/:token</code> (no login)</td></tr>
+  </table>
+
+  <h2><span class="n">09</span>How it was tested</h2>
+  <ul class="check">
+    <li><b>Automated self-check</b>: 23 groups of rule tests run against the real data layer (math, permissions, windows, teams, approvals, read-only lock).</li>
+    <li><b>Browser runs in Microsoft Edge</b> covering every main flow, including phone-width layout checks and screenshots.</li>
+    <li>TypeScript type check and production build pass on every change.</li>
+  </ul>
+
+  <h2><span class="n">10</span>Known limits &amp; next steps</h2>
+  <table>
+    <tr><th style="width:34%">Item</th><th>Note</th></tr>
+    <tr><td>Demo storage</td><td>Data lives in the browser (no backend yet). Use <b>Reset Demo Data</b> after updates.</td></tr>
+    <tr><td>Images</td><td>Stored in the browser for now; should move to Supabase Storage when the backend is connected.</td></tr>
+    <tr><td>Mobile app</td><td>Not updated yet (planned for later).</td></tr>
+    <tr><td>Camera scanning</td><td>Browsers allow the camera only on HTTPS or localhost.</td></tr>
+    <tr><td>Open decisions</td><td>Per-round criteria? Should judges see the leaderboard? Single-use invite links?</td></tr>
+  </table>
+
+  <h2><span class="n">11</span>File changes at a glance</h2>
+  <table>
+    <tr><th style="width:18%">Type</th><th>Files</th></tr>
+    <tr><td><span class="tag t-new">NEW</span> Pages</td><td>Volunteer: <code>VolunteerBrowsePage</code> <code>VolunteerMyEventsPage</code> <code>VolunteerEventLayout</code> <code>VolunteerAccountProfilePage</code>. Participant: <code>ParticipantAllEventsPage</code> <code>ParticipantMyEventsPage</code> <code>ParticipantEventLayout</code> <code>ParticipantEventOverviewPage</code></td></tr>
+    <tr><td><span class="tag t-new">NEW</span> Components</td><td><code>CameraQRScanner</code> <code>EventFormatFields</code> <code>EventFormatBadges</code> <code>CategoryFilter</code> <code>RegistrationFields</code> <code>TeamApplications</code> <code>CriteriaEditor</code> <code>Leaderboard</code> <code>NotificationBanner</code> <code>ChipInput</code> <code>SubmissionShowcase</code> <code>VolunteerFormBuilder</code> <code>JoinByInviteLink</code> <code>VolunteerProfileSummary</code></td></tr>
+    <tr><td><span class="tag t-new">NEW</span> Logic</td><td><code>eventRules.ts</code> (format, windows, validation) · <code>judging.ts</code> (criteria &amp; math) · <code>eventReport.ts</code> (standings &amp; report) · <code>volunteerForm.ts</code> · <code>imageCompress.ts</code></td></tr>
+    <tr><td><span class="tag t-chg">CHANGED</span></td><td><code>mockStorage.ts</code> (rules, approvals, notifications, safe IDs) · <code>types.ts</code> · <code>mockData.ts</code> · <code>App.tsx</code> · Create/Edit Event · organizer Volunteers / Participants / Judging / Overview · <code>JudgeMarkingPage</code> · <code>QRAttendanceModal</code> · volunteer &amp; participant layouts, tasks, announcements, submission · sponsor browse/apply · invite page</td></tr>
+    <tr><td><span class="tag t-fix">REMOVED</span></td><td><code>ParticipantTeamPage.tsx</code>, <code>ParticipantEventsPage.tsx</code> (replaced by the event workspace)</td></tr>
+    <tr><td>Dependencies</td><td>Added <code>qrcode.react</code> (QR badges) and <code>jsqr</code> (camera decoding). Upgraded <code>@hookform/resolvers</code> 3.9 → 5.2.</td></tr>
+  </table>
+
+  <footer>
+    <span><b>FestFlow</b> · Event &amp; Hackathon Operating System</span>
+    <span>Generated November 7, 2026</span>
+  </footer>
+</div>
+</body>
+</html>
