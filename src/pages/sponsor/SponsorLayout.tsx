@@ -4,6 +4,8 @@ import { DashboardShell, DashboardNavLink } from '@/components/layout/DashboardS
 const SPONSOR_LINKS: DashboardNavLink[] = [
   { label: 'Browse Events', path: '/sponsor', exact: true },
   { label: 'My Applications', path: '/sponsor/applications' },
+  { label: 'Sponsorship Offers', path: '/sponsor/offers' },
+  { label: 'Offer Inbox', path: '/sponsor/offer-applications' },
   { label: 'Tasks', path: '/sponsor/tasks' },
 ];
 
@@ -17,4 +19,3 @@ export function SponsorLayout() {
     </DashboardShell>
   );
 }
-

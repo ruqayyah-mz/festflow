@@ -8,6 +8,8 @@ import {
   Announcement,
   JudgeLink,
   SponsorshipApplication,
+  SponsorOffer,
+  OrganizerSponsorshipApplication,
   Invite,
   Mark,
   MarkCriteria,
@@ -29,6 +31,7 @@ import {
   INITIAL_JUDGE_LINKS,
   INITIAL_MARKS,
   INITIAL_SPONSOR_APPS,
+  INITIAL_SPONSOR_OFFERS,
   INITIAL_VOLUNTEER_APPS,
   INITIAL_ATTENDANCE,
 } from './mockData';
@@ -88,6 +91,12 @@ class MockStorage {
     if (!localStorage.getItem('festflow_sponsor_apps')) {
       localStorage.setItem('festflow_sponsor_apps', JSON.stringify(INITIAL_SPONSOR_APPS));
     }
+    if (!localStorage.getItem('festflow_sponsor_offers')) {
+      localStorage.setItem('festflow_sponsor_offers', JSON.stringify(INITIAL_SPONSOR_OFFERS));
+    }
+    if (!localStorage.getItem('festflow_organizer_sponsor_apps')) {
+      localStorage.setItem('festflow_organizer_sponsor_apps', JSON.stringify([]));
+    }
     if (!localStorage.getItem('festflow_volunteer_apps')) {
       localStorage.setItem('festflow_volunteer_apps', JSON.stringify(INITIAL_VOLUNTEER_APPS));
     }
@@ -117,6 +126,8 @@ class MockStorage {
     localStorage.removeItem('festflow_judge_links');
     localStorage.removeItem('festflow_marks');
     localStorage.removeItem('festflow_sponsor_apps');
+    localStorage.removeItem('festflow_sponsor_offers');
+    localStorage.removeItem('festflow_organizer_sponsor_apps');
     localStorage.removeItem('festflow_volunteer_apps');
     localStorage.removeItem('festflow_attendance');
     localStorage.removeItem('festflow_notifications');
@@ -1113,6 +1124,133 @@ class MockStorage {
     localStorage.setItem('festflow_sponsor_apps', JSON.stringify(apps));
     this.notify();
     return apps[index];
+  }
+
+  // --- Sponsor offers and organizer applications ---
+  public getSponsorOffers(sponsorId?: string, includePaused = false): SponsorOffer[] {
+    const offers: SponsorOffer[] = JSON.parse(localStorage.getItem('festflow_sponsor_offers') || '[]');
+    return offers.map((offer) => ({
+      ...offer,
+      category: offer.category || INITIAL_SPONSOR_OFFERS.find((initial) => initial.id === offer.id)?.category || 'other',
+    })).filter((offer) =>
+      (!sponsorId || offer.sponsor_id === sponsorId) &&
+      (includePaused || offer.status === 'active')
+    );
+  }
+
+  public saveSponsorOffer(
+    data: Omit<SponsorOffer, 'id' | 'sponsor_id' | 'status' | 'created_at' | 'updated_at'>,
+    offerId?: string
+  ): SponsorOffer {
+    if (this.currentRole !== 'sponsor') throw new Error('Only sponsors can create or edit sponsor offers.');
+    const offers = this.getSponsorOffers(undefined, true);
+    const now = new Date().toISOString();
+    const existingIndex = offerId
+      ? offers.findIndex((offer) => offer.id === offerId && offer.sponsor_id === this.currentUser.id)
+      : -1;
+    let offer: SponsorOffer;
+
+    if (offerId && existingIndex === -1) throw new Error('Sponsor offer not found.');
+
+    if (existingIndex >= 0) {
+      offer = { ...offers[existingIndex], ...data, updated_at: now };
+      offers[existingIndex] = offer;
+    } else {
+      offer = {
+        ...data,
+        id: uid('offer'),
+        sponsor_id: this.currentUser.id,
+        status: 'active',
+        created_at: now,
+        updated_at: now,
+      };
+      offers.unshift(offer);
+    }
+
+    localStorage.setItem('festflow_sponsor_offers', JSON.stringify(offers));
+    this.notify();
+    return offer;
+  }
+
+  public updateSponsorOfferStatus(offerId: string, status: SponsorOffer['status']): SponsorOffer {
+    const offers = this.getSponsorOffers(undefined, true);
+    const index = offers.findIndex((offer) => offer.id === offerId && offer.sponsor_id === this.currentUser.id);
+    if (this.currentRole !== 'sponsor' || index === -1) throw new Error('Sponsor offer not found.');
+    offers[index] = { ...offers[index], status, updated_at: new Date().toISOString() };
+    localStorage.setItem('festflow_sponsor_offers', JSON.stringify(offers));
+    this.notify();
+    return offers[index];
+  }
+
+  public getOrganizerSponsorshipApplications(filters: {
+    offerId?: string;
+    organizerId?: string;
+  } = {}): OrganizerSponsorshipApplication[] {
+    const applications: OrganizerSponsorshipApplication[] = JSON.parse(
+      localStorage.getItem('festflow_organizer_sponsor_apps') || '[]'
+    );
+    return applications.filter((application) =>
+      (!filters.offerId || application.offer_id === filters.offerId) &&
+      (!filters.organizerId || application.organizer_id === filters.organizerId)
+    );
+  }
+
+  public applyToSponsorOffer(
+    offerId: string,
+    data: Omit<OrganizerSponsorshipApplication, 'id' | 'offer_id' | 'organizer_id' | 'organizer_name' | 'status' | 'created_at'>
+  ): OrganizerSponsorshipApplication {
+    if (this.currentRole !== 'organizer') throw new Error('Only organizers can apply to sponsor offers.');
+    const offer = this.getSponsorOffers().find((item) => item.id === offerId);
+    if (!offer) throw new Error('This sponsor offer is no longer available.');
+    const event = this.getEventById(data.event_id);
+    if (!event || event.organizer_id !== this.currentUser.id) {
+      throw new Error('Choose an event that belongs to your organizer account.');
+    }
+    if (!event.seeking_sponsors || this.isEventConcluded(event.id)) {
+      throw new Error('This event is not currently accepting sponsorship applications.');
+    }
+    if (data.requested_amount > offer.amount) {
+      throw new Error('The requested amount cannot exceed the sponsor offer.');
+    }
+    const applications = this.getOrganizerSponsorshipApplications();
+    if (applications.some((application) =>
+      application.offer_id === offerId &&
+      application.event_id === event.id &&
+      application.organizer_id === this.currentUser.id
+    )) {
+      throw new Error('You have already applied to this offer for that event.');
+    }
+
+    const application: OrganizerSponsorshipApplication = {
+      ...data,
+      id: uid('sponsor-request'),
+      offer_id: offerId,
+      organizer_id: this.currentUser.id,
+      organizer_name: this.currentUser.full_name,
+      status: 'applied',
+      created_at: new Date().toISOString(),
+    };
+    applications.unshift(application);
+    localStorage.setItem('festflow_organizer_sponsor_apps', JSON.stringify(applications));
+    this.notify();
+    return application;
+  }
+
+  public updateOrganizerSponsorshipApplicationStatus(
+    applicationId: string,
+    status: OrganizerSponsorshipApplication['status']
+  ): OrganizerSponsorshipApplication {
+    if (this.currentRole !== 'sponsor') throw new Error('Only sponsors can review sponsorship applications.');
+    const applications = this.getOrganizerSponsorshipApplications();
+    const index = applications.findIndex((application) =>
+      application.id === applicationId &&
+      this.getSponsorOffers(this.currentUser.id, true).some((offer) => offer.id === application.offer_id)
+    );
+    if (index === -1) throw new Error('Sponsorship application not found.');
+    applications[index] = { ...applications[index], status };
+    localStorage.setItem('festflow_organizer_sponsor_apps', JSON.stringify(applications));
+    this.notify();
+    return applications[index];
   }
 
   // --- Volunteer Applications ---

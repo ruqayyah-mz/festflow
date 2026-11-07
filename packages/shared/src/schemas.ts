@@ -57,4 +57,3 @@ export const sponsorshipApplicationSchema = z.object({
   perks_offered: z.string().min(10, 'Details of perks or API credits offered'),
   requirements: z.string().default(''),
 });
-

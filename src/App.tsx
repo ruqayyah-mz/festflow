@@ -30,6 +30,7 @@ import { EventParticipantsPage } from './pages/organizer/event/EventParticipants
 import { EventJudgingPage } from './pages/organizer/event/EventJudgingPage';
 import { EventSponsorshipsPage } from './pages/organizer/event/EventSponsorshipsPage';
 import { EventAnnouncementsPage } from './pages/organizer/event/EventAnnouncementsPage';
+import { OrganizerSponsorshipMarketplacePage } from './pages/organizer/OrganizerSponsorshipMarketplacePage';
 
 // Participant Dashboard
 import { ParticipantLayout } from './pages/participant/ParticipantLayout';
@@ -57,6 +58,8 @@ import { SponsorBrowsePage } from './pages/sponsor/SponsorBrowsePage';
 import { SponsorApplicationsPage } from './pages/sponsor/SponsorApplicationsPage';
 import { SponsorApplicationPage } from './pages/sponsor/SponsorApplicationPage';
 import { SponsorTasksPage } from './pages/sponsor/SponsorTasksPage';
+import { SponsorOffersPage } from './pages/sponsor/SponsorOffersPage';
+import { SponsorOfferApplicationsPage } from './pages/sponsor/SponsorOfferApplicationsPage';
 
 const queryClient = new QueryClient();
 
@@ -117,7 +120,9 @@ export function App() {
               <Route path="events/:eventId/participants" element={<EventParticipantsPage />} />
               <Route path="events/:eventId/judging" element={<EventJudgingPage />} />
               <Route path="events/:eventId/sponsorships" element={<EventSponsorshipsPage />} />
+              <Route path="events/:eventId/sponsor-marketplace" element={<OrganizerSponsorshipMarketplacePage />} />
               <Route path="events/:eventId/announcements" element={<EventAnnouncementsPage />} />
+              <Route path="sponsorship-marketplace" element={<OrganizerSponsorshipMarketplacePage />} />
               <Route path="tasks" element={<OrganizerTasksPage />} />
               <Route path="announcements" element={<OrganizerAnnouncementsPage />} />
               <Route path="judging" element={<OrganizerJudgingPage />} />
@@ -172,6 +177,8 @@ export function App() {
             >
               <Route index element={<SponsorBrowsePage />} />
               <Route path="applications" element={<SponsorApplicationsPage />} />
+              <Route path="offers" element={<SponsorOffersPage />} />
+              <Route path="offer-applications" element={<SponsorOfferApplicationsPage />} />
               <Route path="tasks" element={<SponsorTasksPage />} />
               <Route path="apply/:eventId" element={<SponsorApplicationPage />} />
             </Route>

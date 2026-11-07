@@ -71,6 +71,29 @@ export const sponsorApplicationSchema = z.object({
 
 export type SponsorApplicationFormData = z.infer<typeof sponsorApplicationSchema>;
 
+export const sponsorOfferSchema = z.object({
+  company_name: z.string().trim().min(2, 'Company name is required').max(120),
+  contact_email: z.string().trim().email('Enter a valid contact email'),
+  description: z.string().trim().min(10, 'Add at least 10 characters about your organization').max(2000),
+  category: z.enum(['food', 'venue', 'technology', 'prizes', 'travel', 'media', 'other']),
+  amount: z.coerce.number().positive('Available amount must be greater than zero'),
+  currency: z.enum(['USD', 'INR', 'EUR', 'GBP']),
+  expectations: z.string().trim().min(5, 'Describe what you expect in return').max(2000),
+});
+
+export type SponsorOfferFormInput = z.input<typeof sponsorOfferSchema>;
+export type SponsorOfferFormData = z.infer<typeof sponsorOfferSchema>;
+
+export const organizerSponsorshipApplicationSchema = z.object({
+  event_id: z.string().min(1, 'Choose an event'),
+  contact_email: z.string().trim().email('Enter a valid contact email'),
+  requested_amount: z.coerce.number().positive('Requested amount must be greater than zero'),
+  message: z.string().trim().min(10, 'Add at least 10 characters about your event').max(2000),
+});
+
+export type OrganizerSponsorshipApplicationFormInput = z.input<typeof organizerSponsorshipApplicationSchema>;
+export type OrganizerSponsorshipApplicationFormData = z.infer<typeof organizerSponsorshipApplicationSchema>;
+
 export const judgeMarkSchema = z.object({
   score: z.number().min(0, 'Score cannot be less than 0').max(100, 'Score cannot exceed 100'),
   notes: z.string().max(1000).optional(),

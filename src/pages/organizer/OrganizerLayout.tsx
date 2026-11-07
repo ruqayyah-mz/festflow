@@ -28,10 +28,12 @@ export function OrganizerLayout() {
         { label: 'PARTICIPANTS', path: `/organizer/events/${eventId}/participants` },
         { label: 'JUDGING', path: `/organizer/events/${eventId}/judging` },
         { label: 'SPONSORSHIPS', path: `/organizer/events/${eventId}/sponsorships` },
+        { label: 'SPONSOR MARKETPLACE', path: `/organizer/events/${eventId}/sponsor-marketplace` },
         { label: 'ANNOUNCEMENTS', path: `/organizer/events/${eventId}/announcements` },
       ]
     : [
         { label: 'OVERVIEW', path: '/organizer', exact: true },
+        { label: 'SPONSOR MARKETPLACE', path: '/organizer/sponsorship-marketplace' },
         { label: '+ CREATE EVENT', path: '/organizer/events/new' },
       ];
 

@@ -19,6 +19,7 @@ FestFlow is a unified, minimalist event management SaaS ecosystem tailored for c
 
 ### 1. Organizer (Primary Role)
 - **Event Lifecycle**: Create public or private events with dates, physical venue/virtual links, and sponsorship recruitment settings.
+- **Sponsor Offer Marketplace**: Browse sponsor offers by category (food, venue, technology, prizes, travel, media, or other), review available funding and expectations, and apply to support an event.
 - **Soft-Delete Architecture**: Events are marked with `deleted_at` timestamps rather than destructive hard-deletions, preserving audit integrity.
 - **Multi-Round Evaluation Engine**: Define stages (e.g. *Round 1: Idea Validation*, *Round 2: Prototype Demo*, *Round 3: Grand Stage Finals*) with customizable weights (%) and single-click round activations.
 - **Reusable TaskWidget**: Assign task checklists to volunteers and sponsors with real-time status toggles (`todo` / `in_progress` / `done`), assignees, and due dates.
@@ -39,6 +40,7 @@ FestFlow is a unified, minimalist event management SaaS ecosystem tailored for c
 - **Live Portfolio Throughput Bar**: Dynamic progress bar calculating individual and team completion percentages.
 
 ### 4. Sponsor (Partner Layer)
+- **Sponsor Offers**: Publish multiple categorized funding offers with organization details, available amount, currency, and expected event benefits; review and respond to organizer applications.
 - **Public Sponsorship Directory**: Discover events actively seeking corporate sponsors.
 - **Structured Application Pipeline**: Apply with company details, requested tier, offered perks (API credits, GPUs, hardware), and stage/booth requirements.
 - **Progression Tracker**: Monitor status stages: `applied` → `under review` → `confirmed`.

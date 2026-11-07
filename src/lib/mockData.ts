@@ -1,4 +1,4 @@
-import { Event, Profile, Role, Team, Submission, Task, Announcement, JudgeLink, SponsorshipApplication, Invite, Mark, VolunteerApplication, AttendanceRecord } from '@/types';
+import { Event, Profile, Role, Team, Submission, Task, Announcement, JudgeLink, SponsorshipApplication, SponsorOffer, Invite, Mark, VolunteerApplication, AttendanceRecord } from '@/types';
 
 export const INITIAL_PROFILES: Profile[] = [
   {
@@ -478,6 +478,23 @@ export const INITIAL_SPONSOR_APPS: SponsorshipApplication[] = [
       requirements: 'Dedicated 45-minute technical workshop session.',
     },
     created_at: new Date(Date.now() - 86400000 * 1).toISOString(),
+  },
+];
+
+export const INITIAL_SPONSOR_OFFERS: SponsorOffer[] = [
+  {
+    id: 'offer-cloudnova-01',
+    sponsor_id: 'usr-sponsor-01',
+    company_name: 'CloudNova Labs',
+    contact_email: 'partners@cloudnova.io',
+    description: 'CloudNova provides GPU infrastructure and developer tools for teams building AI products.',
+    category: 'technology',
+    amount: 15000,
+    currency: 'USD',
+    expectations: 'We are looking for a technical workshop, a recruiting booth, and permission to share our internship opportunities with attendees.',
+    status: 'active',
+    created_at: new Date(Date.now() - 86400000 * 2).toISOString(),
+    updated_at: new Date(Date.now() - 86400000 * 2).toISOString(),
   },
 ];
 

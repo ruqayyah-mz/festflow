@@ -197,6 +197,53 @@ export interface SponsorshipApplication {
   created_at: string;
 }
 
+export type SponsorCategory =
+  | 'food'
+  | 'venue'
+  | 'technology'
+  | 'prizes'
+  | 'travel'
+  | 'media'
+  | 'other';
+
+export const SPONSOR_CATEGORY_LABELS: Record<SponsorCategory, string> = {
+  food: 'Food',
+  venue: 'Venue',
+  technology: 'Technology',
+  prizes: 'Prizes',
+  travel: 'Travel',
+  media: 'Media',
+  other: 'Other',
+};
+
+export interface SponsorOffer {
+  id: string;
+  sponsor_id: string;
+  company_name: string;
+  contact_email: string;
+  description: string;
+  category: SponsorCategory;
+  amount: number;
+  currency: string;
+  expectations: string;
+  status: 'active' | 'paused';
+  created_at: string;
+  updated_at: string;
+}
+
+export interface OrganizerSponsorshipApplication {
+  id: string;
+  offer_id: string;
+  event_id: string;
+  organizer_id: string;
+  organizer_name: string;
+  contact_email: string;
+  requested_amount: number;
+  message: string;
+  status: 'applied' | 'under_review' | 'accepted' | 'declined';
+  created_at: string;
+}
+
 export interface VolunteerFormQuestion {
   id: string;
   label: string;
@@ -262,4 +309,3 @@ export interface DeviceToken {
   created_at: string;
   updated_at: string;
 }
-
