@@ -15,8 +15,8 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
-// 3. Disable hierarchical lookup to ensure consistent module resolution
-config.resolver.disableHierarchicalLookup = true;
+// NOTE: hierarchical lookup must stay enabled. This repo is not an npm workspace,
+// so transitive deps (e.g. expo-router -> query-string) live in nested node_modules.
 
 module.exports = config;
 

@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthProvider } from './hooks/useAuth';
 import { RoleGuard } from './lib/guards';
 import { PublicHeader } from './components/layout/PublicHeader';
+import { SyncErrorToast } from './components/layout/SyncErrorToast';
 
 // Public & Auth Pages
 import { LandingPage } from './pages/LandingPage';
@@ -93,6 +94,7 @@ export function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <SyncErrorToast />
         <Router>
           <Routes>
             {/* Judge page: Single-purpose, mobile-first, no login, no shared shell */}

@@ -1,21 +1,21 @@
 {
   "project_info": {
-    "project_number": "123456789012",
-    "project_id": "festflow-fcm",
-    "storage_bucket": "festflow-fcm.appspot.com"
+    "project_number": "447643032212",
+    "project_id": "festflow-2dd6e",
+    "storage_bucket": "festflow-2dd6e.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:123456789012:android:abcdef0123456789abcdef",
+        "mobilesdk_app_id": "1:447643032212:android:bfcf1af7cfa8fbcd783281",
         "android_client_info": {
-          "package_name": "dev.festflow.app"
+          "package_name": "dev.festflow"
         }
       },
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyPlaceholderKeyForFirebaseServices123"
+          "current_key": "AIzaSyAwJxpA7EPVEp9apiDfqcJx0H53KVE0cr0"
         }
       ],
       "services": {
@@ -27,4 +27,3 @@
   ],
   "configuration_version": "1"
 }
-

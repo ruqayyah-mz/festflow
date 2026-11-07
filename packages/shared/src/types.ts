@@ -137,6 +137,9 @@ export interface Task {
   // Set when a volunteer picks up an open ("General") task themselves; lets them release it again.
   claimed_at?: string | null;
   created_at: string;
+  updated_at?: string;
+  // Joined from events.name when tasks are loaded from Supabase (mobile widget / app)
+  event_name?: string;
 }
 
 export interface Announcement {

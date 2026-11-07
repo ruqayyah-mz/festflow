@@ -102,7 +102,7 @@ Follow these exact steps to connect your live cloud services and build your stan
 
 ### Step 2: Add Firebase `google-services.json`
 1. Go to the [Firebase Console](https://console.firebase.google.com/) and open/create your project.
-2. Add an Android app with package name: **`dev.festflow.app`**.
+2. Add an Android app with package name: **`dev.festflow`**.
 3. Download the generated `google-services.json` file.
 4. Replace the placeholder file at `c:\Users\lenovo\Desktop\festflow\apps\mobile\google-services.json`.
 
@@ -111,9 +111,10 @@ Follow these exact steps to connect your live cloud services and build your stan
    ```bash
    npx supabase functions deploy push-notifications --no-verify-jwt
    ```
-2. In Supabase Dashboard -> **Database** -> **Webhooks**, create two webhooks pointing to your edge function:
-   - Webhook 1: Table `public.announcements`, Events: `INSERT`.
-   - Webhook 2: Table `public.tasks`, Events: `INSERT`, `UPDATE`.
+2. **Superseded:** task notifications are now sent by a database trigger (migration `20261108000000_volunteer_task_loop.sql`).
+   Do **not** create a dashboard webhook for `public.tasks`, or volunteers get every notification twice.
+   Follow `docs/VOLUNTEER_WIDGET_SETUP.md` instead. (An announcements webhook is optional; if you add one,
+   give it the header `x-webhook-secret: <your WEBHOOK_SECRET>`.)
 
 ### Step 4: Build and Install the Standalone Android APK
 1. Open PowerShell and navigate to the mobile app directory:

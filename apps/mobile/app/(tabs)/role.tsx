@@ -1,61 +1,76 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { Profile } from '@festflow/shared';
+import { useFocusEffect } from 'expo-router';
+import { Event, Profile } from '@festflow/shared';
 import { MobileStorage } from '../../src/lib/storage';
+import { supabase } from '../../src/lib/supabase';
+import { getCachedMyTasks } from '../../src/lib/tasks';
 import { Shield, MapPin, Calendar, CheckSquare } from 'lucide-react-native';
+
+const fmt = (iso: string) =>
+  new Date(iso).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
 export default function VolunteerRoleScreen() {
   const [user, setUser] = useState<Profile | null>(null);
+  const [email, setEmail] = useState<string | null>(null);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [counts, setCounts] = useState({ todo: 0, in_progress: 0, done: 0 });
 
-  useEffect(() => {
-    async function loadUser() {
-      const u = await MobileStorage.getUser();
-      setUser(u);
-    }
-    loadUser();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      (async () => {
+        setUser(await MobileStorage.getUser());
+        setEvent(await MobileStorage.getEvent());
+        if (supabase) setEmail((await supabase.auth.getSession()).data.session?.user.email ?? null);
+        const tasks = await getCachedMyTasks();
+        setCounts({
+          todo: tasks.filter((t) => t.status === 'todo').length,
+          in_progress: tasks.filter((t) => t.status === 'in_progress').length,
+          done: tasks.filter((t) => t.status === 'done').length,
+        });
+      })();
+    }, [])
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Profile Card */}
         <View style={styles.profileCard}>
           <View style={styles.badgeRow}>
             <Shield size={16} color="#1d4ed8" />
-            <Text style={styles.badgeText}>OFFICIAL VOLUNTEER CREDENTIAL</Text>
+            <Text style={styles.badgeText}>VOLUNTEER</Text>
           </View>
-          <Text style={styles.name}>{user?.full_name || 'Sarah Chen'}</Text>
-          <Text style={styles.roleTitle}>Logistics & Hacker Experience Lead</Text>
+          <Text style={styles.name}>{user?.full_name ?? '—'}</Text>
+          {email ? <Text style={styles.roleTitle}>{email}</Text> : null}
         </View>
 
-        {/* Assigned Shift and Venue Scope */}
         <View style={styles.detailsCard}>
-          <Text style={styles.sectionHeader}>ASSIGNMENT SCOPE & VENUE</Text>
-
-          <View style={styles.row}>
-            <MapPin size={16} color="#64748b" />
-            <View style={styles.col}>
-              <Text style={styles.label}>Venue Location</Text>
-              <Text style={styles.val}>Grand Innovation Arena — Floor 3, Benches 1 to 20</Text>
-            </View>
-          </View>
+          <Text style={styles.sectionHeader}>MY EVENT</Text>
 
           <View style={styles.row}>
             <Calendar size={16} color="#64748b" />
             <View style={styles.col}>
-              <Text style={styles.label}>Active Shift Rotation</Text>
-              <Text style={styles.val}>Shift B: 14:00 PM — 22:00 PM (Dinner & Judging Escort)</Text>
+              <Text style={styles.label}>{event?.name ?? 'No event yet'}</Text>
+              {event ? <Text style={styles.val}>{fmt(event.starts_at)} — {fmt(event.ends_at)}</Text> : null}
             </View>
           </View>
+
+          {event?.venue ? (
+            <View style={styles.row}>
+              <MapPin size={16} color="#64748b" />
+              <View style={styles.col}>
+                <Text style={styles.label}>Venue</Text>
+                <Text style={styles.val}>{event.venue}</Text>
+              </View>
+            </View>
+          ) : null}
 
           <View style={styles.row}>
             <CheckSquare size={16} color="#64748b" />
             <View style={styles.col}>
-              <Text style={styles.label}>Core Directives</Text>
+              <Text style={styles.label}>My tasks</Text>
               <Text style={styles.val}>
-                1. Assist hackathon judges with table navigation.{'\n'}
-                2. Monitor Wi-Fi stability and power circuit health.{'\n'}
-                3. Check off assigned duties using the mobile tasks screen or Android home widget.
+                {counts.todo} to do · {counts.in_progress} in progress · {counts.done} done
               </Text>
             </View>
           </View>

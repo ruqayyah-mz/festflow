@@ -2,6 +2,36 @@
 -- FestFlow: Demo Seed Data (Updated with Phase 2 Schema)
 -- ====================================================================
 
+-- Demo login accounts (Supabase Auth). profiles.id references auth.users(id), so these must exist first.
+-- All four demo accounts use the password: festflow-demo
+-- (Run this file in the Supabase SQL editor, which runs as a role allowed to write to the auth schema.)
+INSERT INTO auth.users (
+    instance_id, id, aud, role, email, encrypted_password, email_confirmed_at,
+    raw_app_meta_data, raw_user_meta_data, created_at, updated_at,
+    confirmation_token, email_change, email_change_token_new, recovery_token
+)
+SELECT
+    '00000000-0000-0000-0000-000000000000', u.id, 'authenticated', 'authenticated', u.email,
+    crypt('festflow-demo', gen_salt('bf')), NOW(),
+    '{"provider":"email","providers":["email"]}'::jsonb, jsonb_build_object('full_name', u.full_name), NOW(), NOW(),
+    '', '', '', ''
+FROM (VALUES
+    ('00000000-0000-0000-0000-000000000001'::uuid, 'organizer@festflow.dev', 'Alex Rivera (Lead Organizer)'),
+    ('00000000-0000-0000-0000-000000000002'::uuid, 'volunteer@festflow.dev', 'Sarah Chen (Volunteer Coordinator)'),
+    ('00000000-0000-0000-0000-000000000003'::uuid, 'sponsor@festflow.dev', 'Elena Rostova (DevRel Sponsor)'),
+    ('00000000-0000-0000-0000-000000000004'::uuid, 'participant@festflow.dev', 'David Kim (Team Lead Participant)')
+) AS u(id, email, full_name)
+ON CONFLICT (id) DO NOTHING;
+
+INSERT INTO auth.identities (provider_id, user_id, identity_data, provider, last_sign_in_at, created_at, updated_at)
+SELECT u.id::text, u.id, jsonb_build_object('sub', u.id::text, 'email', u.email, 'email_verified', true), 'email', NOW(), NOW(), NOW()
+FROM auth.users u
+WHERE u.id IN (
+    '00000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002',
+    '00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000004'
+)
+ON CONFLICT (provider_id, provider) DO NOTHING;
+
 -- Demo Organizer User UUID
 -- 00000000-0000-0000-0000-000000000001
 INSERT INTO public.profiles (id, full_name)
@@ -59,27 +89,27 @@ ON CONFLICT (user_id, event_id, role_type) DO UPDATE SET role_title = EXCLUDED.r
 
 -- Demo Invites
 INSERT INTO public.invites (id, event_id, token, role_type, role_title, expires_at) VALUES
-    ('i0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'vol-cq26-lead', 'volunteer', 'Registration & Badging Lead', NOW() + INTERVAL '7 days'),
-    ('i0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'vol-cq26-tech', 'volunteer', 'Hardware & Network Support', NOW() + INTERVAL '7 days')
+    ('f1000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'vol-cq26-lead', 'volunteer', 'Registration & Badging Lead', NOW() + INTERVAL '7 days'),
+    ('f1000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'vol-cq26-tech', 'volunteer', 'Hardware & Network Support', NOW() + INTERVAL '7 days')
 ON CONFLICT (token) DO UPDATE SET expires_at = EXCLUDED.expires_at;
 
 -- Teams
 INSERT INTO public.teams (id, event_id, name, join_code, table_number, track) VALUES
-    ('t0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'NeuralNomads', 'CQ-7701', 'Table 14', 'AI / ML Systems'),
-    ('t0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'BlockForge', 'CQ-8822', 'Table 15', 'Decentralized Web'),
-    ('t0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', 'ZeroLag Devs', 'CQ-9933', 'Table 16', 'Developer Tooling')
+    ('f6000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'NeuralNomads', 'CQ-7701', 'Table 14', 'AI / ML Systems'),
+    ('f6000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'BlockForge', 'CQ-8822', 'Table 15', 'Decentralized Web'),
+    ('f6000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', 'ZeroLag Devs', 'CQ-9933', 'Table 16', 'Developer Tooling')
 ON CONFLICT (id) DO UPDATE SET name = EXCLUDED.name, table_number = EXCLUDED.table_number, track = EXCLUDED.track;
 
 -- Team members
 INSERT INTO public.team_members (team_id, user_id) VALUES
-    ('t0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000004')
+    ('f6000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000004')
 ON CONFLICT (team_id, user_id) DO NOTHING;
 
 -- Submissions
 INSERT INTO public.submissions (id, team_id, event_id, title, description, repo_url, demo_url, status, submitted_at) VALUES
     (
-        's0000000-0000-0000-0000-000000000001',
-        't0000000-0000-0000-0000-000000000001',
+        'f5000000-0000-0000-0000-000000000001',
+        'f6000000-0000-0000-0000-000000000001',
         'e0000000-0000-0000-0000-000000000001',
         'PulseAI: Emergency Medical Dispatcher Copilot',
         'Low-latency acoustic emotion and symptom detection agent for emergency call centers.',
@@ -89,8 +119,8 @@ INSERT INTO public.submissions (id, team_id, event_id, title, description, repo_
         NOW() - INTERVAL '4 hours'
     ),
     (
-        's0000000-0000-0000-0000-000000000002',
-        't0000000-0000-0000-0000-000000000002',
+        'f5000000-0000-0000-0000-000000000002',
+        'f6000000-0000-0000-0000-000000000002',
         'e0000000-0000-0000-0000-000000000001',
         'ChainAudit: Autonomous Smart Contract Formal Verification',
         'Real-time symbolic execution and formal verification tool for Solidity EVM bytecodes.',
@@ -103,9 +133,9 @@ ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, description = EXCLUDED.de
 
 -- Tasks for volunteers & sponsors (with completed_at)
 INSERT INTO public.tasks (id, event_id, assignee_id, assignee_type, title, description, status, due_at, completed_at) VALUES
-    ('k0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'volunteer', 'Coordinate Midnight Snack Delivery', 'Distribute energy bars and sponsor swag to Tables 1 to 20.', 'done', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '45 minutes'),
-    ('k0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'volunteer', 'Check Table Wi-Fi signal & Power strips', 'Verify that all rows have adequate 240V power surge protectors.', 'in_progress', NOW() + INTERVAL '2 hours', NULL),
-    ('k0000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000003', 'sponsor', 'Submit Workshop Slides & API Credits Voucher', 'Upload presentation slides for the 2:00 PM Tech Talk on Edge AI.', 'todo', NOW() + INTERVAL '4 hours', NULL)
+    ('f3000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'volunteer', 'Coordinate Midnight Snack Delivery', 'Distribute energy bars and sponsor swag to Tables 1 to 20.', 'done', NOW() - INTERVAL '1 hour', NOW() - INTERVAL '45 minutes'),
+    ('f3000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000002', 'volunteer', 'Check Table Wi-Fi signal & Power strips', 'Verify that all rows have adequate 240V power surge protectors.', 'in_progress', NOW() + INTERVAL '2 hours', NULL),
+    ('f3000000-0000-0000-0000-000000000003', 'e0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-000000000003', 'sponsor', 'Submit Workshop Slides & API Credits Voucher', 'Upload presentation slides for the 2:00 PM Tech Talk on Edge AI.', 'todo', NOW() + INTERVAL '4 hours', NULL)
 ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, completed_at = EXCLUDED.completed_at;
 
 -- Announcements (with title and message)
@@ -117,14 +147,14 @@ ON CONFLICT (id) DO UPDATE SET title = EXCLUDED.title, message = EXCLUDED.messag
 
 -- Judge Links
 INSERT INTO public.judge_links (id, event_id, token, table_assignment, track_assignment, judge_name) VALUES
-    ('j0000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'judge-table-14-15', 'Table 14 - 15', 'AI & Decentralized Web', 'Dr. Marcus Vance (Staff Architect)'),
-    ('j0000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'judge-all-tracks', 'Tables 1 - 20', 'All Tracks', 'Priya Raman (Partner, Venture Capital)')
+    ('f2000000-0000-0000-0000-000000000001', 'e0000000-0000-0000-0000-000000000001', 'judge-table-14-15', 'Table 14 - 15', 'AI & Decentralized Web', 'Dr. Marcus Vance (Staff Architect)'),
+    ('f2000000-0000-0000-0000-000000000002', 'e0000000-0000-0000-0000-000000000001', 'judge-all-tracks', 'Tables 1 - 20', 'All Tracks', 'Priya Raman (Partner, Venture Capital)')
 ON CONFLICT (token) DO UPDATE SET table_assignment = EXCLUDED.table_assignment;
 
 -- Sponsorship Applications
 INSERT INTO public.sponsorship_applications (id, event_id, sponsor_id, status, form_data) VALUES
     (
-        'p0000000-0000-0000-0000-000000000001',
+        'f4000000-0000-0000-0000-000000000001',
         'e0000000-0000-0000-0000-000000000001',
         '00000000-0000-0000-0000-000000000003',
         'confirmed',

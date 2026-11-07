@@ -1,14 +1,13 @@
 import React, { useEffect } from 'react';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { router } from 'expo-router';
-import { MobileStorage } from '../src/lib/storage';
+import { goHome, hasSession } from '../src/lib/session';
 
 export default function IndexScreen() {
   useEffect(() => {
     async function checkAuth() {
-      const user = await MobileStorage.getUser();
-      if (user) {
-        router.replace('/(tabs)');
+      if (await hasSession()) {
+        await goHome();
       } else {
         router.replace('/login');
       }

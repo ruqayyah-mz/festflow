@@ -70,14 +70,16 @@ export function Navbar() {
             />
             {isLiveSupabase ? 'Supabase Live' : 'Demo LocalDB Mode'}
           </span>
-          <button
-            onClick={resetData}
-            title="Reset demo data to initial state"
-            className="inline-flex items-center gap-1 text-slate-500 hover:text-blue-700 cursor-pointer font-medium"
-          >
-            <RotateCcw className="w-3 h-3 text-blue-600" />
-            <span>Reset Demo</span>
-          </button>
+          {!isLiveSupabase && (
+            <button
+              onClick={resetData}
+              title="Reset demo data to initial state"
+              className="inline-flex items-center gap-1 text-slate-500 hover:text-blue-700 cursor-pointer font-medium"
+            >
+              <RotateCcw className="w-3 h-3 text-blue-600" />
+              <span>Reset Demo</span>
+            </button>
+          )}
         </div>
       </div>
 

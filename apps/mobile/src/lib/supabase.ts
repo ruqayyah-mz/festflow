@@ -20,11 +20,15 @@ export const supabase = isLiveSupabase
     })
   : null;
 
-// Reconnect Realtime channels when app returns to foreground
+// Foreground: resume token refresh and make sure the Realtime socket is connected.
+// (Background: stop refreshing; RN timers are unreliable there. See Supabase React Native docs.)
 if (supabase) {
   AppState.addEventListener('change', (state) => {
     if (state === 'active') {
-      supabase.realtime.reconnect();
+      supabase.auth.startAutoRefresh();
+      supabase.realtime.connect();
+    } else {
+      supabase.auth.stopAutoRefresh();
     }
   });
 }

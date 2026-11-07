@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, SafeAreaView } from 'react-native';
 import { Tabs, router } from 'expo-router';
-import { RoleType } from '@festflow/shared';
-import { MobileStorage } from '../../src/lib/storage';
-import { CheckSquare, Bell, User, Globe, FileText, Home, Users, Upload, LayoutDashboard, Settings } from 'lucide-react-native';
+import { Event, RoleType } from '@festflow/shared';
+import { MobileStorage, onActiveEventChange } from '../../src/lib/storage';
+import { refreshMyEvents } from '../../src/lib/events';
+import { ROLE_HOME, signOut } from '../../src/lib/session';
+import { CheckSquare, Bell, User, Globe, FileText, Home, Users, Upload, LayoutDashboard, Settings, Calendar } from 'lucide-react-native';
 
 export default function TabsLayout() {
   const [currentRole, setCurrentRole] = useState<RoleType>('volunteer');
   const [availableRoles, setAvailableRoles] = useState<RoleType[]>([]);
   const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
+  const [event, setEvent] = useState<Event | null>(null);
+  const [events, setEvents] = useState<Event[]>([]);
+  const [isEventModalVisible, setIsEventModalVisible] = useState(false);
+
+  const loadEvents = async () => {
+    setEvent(await MobileStorage.getEvent());
+    setEvents(await MobileStorage.getEvents());
+  };
 
   useEffect(() => {
     async function loadRoles() {
@@ -16,25 +26,21 @@ export default function TabsLayout() {
       const roles = await MobileStorage.getUserRoles();
       setCurrentRole(role);
       setAvailableRoles(roles);
+      await loadEvents();
+      await refreshMyEvents().catch(() => undefined); // picks up events the organizer added me to since sign-in
+      await loadEvents();
     }
     loadRoles();
+    return onActiveEventChange(loadEvents);
   }, []);
 
   const handleSwitchRole = async (newRole: RoleType) => {
     setCurrentRole(newRole);
     await MobileStorage.setActiveRole(newRole);
     setIsRoleModalVisible(false);
+    await refreshMyEvents(newRole).catch(() => undefined);
 
-    // Route to home tab of selected role
-    if (newRole === 'volunteer') {
-      router.push('/(tabs)/tasks');
-    } else if (newRole === 'sponsor') {
-      router.push('/(tabs)/browse');
-    } else if (newRole === 'participant') {
-      router.push('/(tabs)/home');
-    } else if (newRole === 'organizer') {
-      router.push('/(tabs)/overview');
-    }
+    router.push(ROLE_HOME[newRole]);
   };
 
   return (
@@ -42,9 +48,16 @@ export default function TabsLayout() {
       {/* Top Bar with Event Name, Role Switcher and Widget Guide */}
       <View style={styles.topBar}>
         <View style={styles.eventInfo}>
-          <Text style={styles.eventName} numberOfLines={1}>
-            National Builder HackFest 2026
-          </Text>
+          <TouchableOpacity
+            activeOpacity={0.7}
+            accessibilityRole="button"
+            accessibilityLabel="Switch event"
+            onPress={() => setIsEventModalVisible(true)}
+          >
+            <Text style={styles.eventName} numberOfLines={1}>
+              {event ? `${event.name}${events.length > 1 ? ' ▾' : ''}` : 'No events yet'}
+            </Text>
+          </TouchableOpacity>
           <TouchableOpacity
             style={styles.roleBadge}
             activeOpacity={0.7}
@@ -91,6 +104,52 @@ export default function TabsLayout() {
                 {r === currentRole && <Text style={styles.activeCheck}>✓</Text>}
               </TouchableOpacity>
             ))}
+            <TouchableOpacity
+              style={styles.roleOption}
+              onPress={async () => {
+                setIsRoleModalVisible(false);
+                await signOut();
+                router.replace('/login');
+              }}
+            >
+              <Text style={[styles.roleOptionText, { color: '#b91c1c' }]}>SIGN OUT</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Event Switcher Modal: everything below the header is scoped to the chosen event */}
+      <Modal
+        visible={isEventModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setIsEventModalVisible(false)}
+      >
+        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setIsEventModalVisible(false)}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>MY EVENTS</Text>
+            {events.length === 0 ? (
+              <Text style={styles.roleOptionText}>You haven't been added to an event yet.</Text>
+            ) : (
+              events.map((e) => (
+                <TouchableOpacity
+                  key={e.id}
+                  style={[styles.roleOption, e.id === event?.id && styles.roleOptionActive]}
+                  onPress={async () => {
+                    setIsEventModalVisible(false);
+                    await MobileStorage.setEvent(e);
+                  }}
+                >
+                  <Text
+                    style={[styles.roleOptionText, e.id === event?.id && styles.roleOptionTextActive]}
+                    numberOfLines={1}
+                  >
+                    {e.name}
+                  </Text>
+                  {e.id === event?.id && <Text style={styles.activeCheck}>✓</Text>}
+                </TouchableOpacity>
+              ))
+            )}
           </View>
         </TouchableOpacity>
       </Modal>
@@ -106,6 +165,14 @@ export default function TabsLayout() {
         }}
       >
         {/* Volunteer Tabs */}
+        <Tabs.Screen
+          name="events"
+          options={{
+            title: 'My Events',
+            href: currentRole === 'volunteer' ? '/(tabs)/events' : null,
+            tabBarIcon: ({ color }) => <Calendar size={18} color={color} />,
+          }}
+        />
         <Tabs.Screen
           name="tasks"
           options={{

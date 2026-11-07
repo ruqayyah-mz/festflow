@@ -4,9 +4,18 @@
     "strict": true,
     "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"],
-      "@widgets/*": ["./widgets/*"],
-      "@festflow/shared": ["../../packages/shared/src/index.ts"]
+      "@/*": [
+        "./src/*"
+      ],
+      "@widgets/*": [
+        "./widgets/*"
+      ],
+      "@festflow/shared": [
+        "../../packages/shared/src/index.ts"
+      ],
+      "zod": [
+        "./node_modules/zod"
+      ]
     }
   },
   "include": [
@@ -16,4 +25,3 @@
     "expo-env.d.ts"
   ]
 }
-

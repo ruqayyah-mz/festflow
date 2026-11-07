@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, router } from 'expo-router';
 import { MobileStorage } from '../../src/lib/storage';
+import { goHome } from '../../src/lib/session';
 import { CheckCircle2, AlertTriangle, ArrowRight } from 'lucide-react-native';
 
 export default function InviteOnboardingScreen() {
@@ -67,7 +68,7 @@ export default function InviteOnboardingScreen() {
           <TouchableOpacity
             style={styles.enterButton}
             activeOpacity={0.85}
-            onPress={() => router.replace('/(tabs)')}
+            onPress={goHome}
           >
             <Text style={styles.enterButtonText}>Open Role Dashboard</Text>
             <ArrowRight size={14} color="#ffffff" />

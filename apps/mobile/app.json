@@ -2,6 +2,7 @@
   "expo": {
     "name": "FestFlow",
     "slug": "festflow",
+    "owner": "zainabs-team",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -16,7 +17,7 @@
       "supportsTablet": false
     },
     "android": {
-      "package": "dev.festflow.app",
+      "package": "dev.festflow",
       "versionCode": 1,
       "minSdkVersion": 26,
       "adaptiveIcon": {
@@ -43,7 +44,10 @@
               "pathPrefix": "/invite"
             }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ]
     },
@@ -62,13 +66,15 @@
           "widgets": [
             {
               "name": "TasksWidget",
-              "label": "FestFlow: Tasks",
+              "label": "FestFlow: My Tasks",
               "minWidth": "160dp",
               "minHeight": "110dp",
               "targetCellWidth": 2,
-              "targetCellHeight": 2,
-              "description": "Interactive checklist of upcoming tasks for volunteers and sponsors",
-              "updatePeriodMillis": 900000
+              "targetCellHeight": 3,
+              "description": "Checklist of your assigned tasks. Tick a box to mark it done without opening the app.",
+              "updatePeriodMillis": 1800000,
+              "resizeMode": "horizontal|vertical",
+              "widgetFeatures": "reconfigurable"
             },
             {
               "name": "OrganizerProgressWidget",
@@ -77,8 +83,9 @@
               "minHeight": "70dp",
               "targetCellWidth": 4,
               "targetCellHeight": 1,
-              "description": "Live progress bar of completed tasks and active participant count",
-              "updatePeriodMillis": 900000
+              "description": "Progress bar of your tasks for one event",
+              "updatePeriodMillis": 1800000,
+              "widgetFeatures": "reconfigurable"
             },
             {
               "name": "ParticipantAnnouncementsWidget",
@@ -87,8 +94,9 @@
               "minHeight": "110dp",
               "targetCellWidth": 4,
               "targetCellHeight": 2,
-              "description": "Real-time feed of official announcements and deadline alerts",
-              "updatePeriodMillis": 900000
+              "description": "Latest announcements for one event",
+              "updatePeriodMillis": 1800000,
+              "widgetFeatures": "reconfigurable"
             }
           ]
         }
@@ -99,9 +107,8 @@
         "origin": false
       },
       "eas": {
-        "projectId": "festflow-prod-uuid"
+        "projectId": "d5e50f3f-1f5b-47fd-ba67-0c4e77271329"
       }
     }
   }
 }
-

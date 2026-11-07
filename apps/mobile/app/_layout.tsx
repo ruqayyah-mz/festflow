@@ -1,12 +1,13 @@
 import React, { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { registerWidgetTaskHandler } from 'react-native-android-widget';
-import { widgetTaskHandler } from '../widgets/widgetTaskHandler';
 import { setupNotificationListeners } from '../src/lib/notifications';
+import { refreshEverything } from '../src/lib/backgroundRefresh';
 
-// Register Android home screen widget headless task handler
-registerWidgetTaskHandler(widgetTaskHandler);
+// The widget handler and background push task are registered in /index.ts (app entry) so they
+// also work when no screen is mounted.
+
 
 export default function RootLayout() {
   useEffect(() => {
@@ -19,10 +20,16 @@ export default function RootLayout() {
       } else if (deepLinkUrl.startsWith('festflow://tasks')) {
         router.push('/(tabs)/tasks');
       }
+    }, refreshEverything);
+
+    // Coming back to the app: replay offline ticks and pull anything assigned meanwhile.
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refreshEverything();
     });
 
     return () => {
       unsubscribe();
+      appState.remove();
     };
   }, []);
 
@@ -34,6 +41,7 @@ export default function RootLayout() {
         <Stack.Screen name="login" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="invite/[token]" options={{ presentation: 'modal' }} />
+        <Stack.Screen name="task/[id]" />
         <Stack.Screen name="settings/widgets" options={{ presentation: 'card', headerShown: true, title: 'Add Home Screen Widgets' }} />
       </Stack>
     </>

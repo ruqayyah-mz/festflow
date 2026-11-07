@@ -3,7 +3,7 @@ import { NavLink, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { mockStorage } from '@/lib/mockStorage';
 import { RoleType } from '@/types';
-import { RotateCcw, ChevronDown } from 'lucide-react';
+import { RotateCcw, ChevronDown, LogOut } from 'lucide-react';
 
 export interface DashboardNavLink {
   label: string;
@@ -24,7 +24,7 @@ export function DashboardShell({
   currentRole,
   topBanner,
 }: DashboardShellProps) {
-  const { user, role, switchUser, availableProfiles, resetData } = useAuth();
+  const { user, role, switchUser, availableProfiles, availableRoles, resetData, isLiveSupabase, signOut } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -43,6 +43,11 @@ export function DashboardShell({
 
   const handleRoleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newRole = e.target.value as RoleType;
+    if (isLiveSupabase) {
+      switchUser(user?.id ?? '', newRole); // live: own roles only
+      navigate(`/${newRole}`);
+      return;
+    }
     let targetProfileId = availableProfiles[0].id;
     if (newRole === 'volunteer') targetProfileId = availableProfiles[1]?.id || targetProfileId;
     if (newRole === 'sponsor') targetProfileId = availableProfiles[2]?.id || targetProfileId;
@@ -108,10 +113,13 @@ export function DashboardShell({
                 aria-label="Role Switcher"
                 className="text-xs border border-slate-300 bg-white px-2.5 py-1 text-slate-800 font-medium focus:outline-none focus:border-blue-600 cursor-pointer shadow-2xs"
               >
-                <option value="organizer">Organizer</option>
-                <option value="participant">Participant</option>
-                <option value="volunteer">Volunteer</option>
-                <option value="sponsor">Sponsor</option>
+                {(['organizer', 'participant', 'volunteer', 'sponsor'] as const)
+                  .filter((r) => !isLiveSupabase || availableRoles.includes(r))
+                  .map((r) => (
+                    <option key={r} value={r}>
+                      {r.charAt(0).toUpperCase() + r.slice(1)}
+                    </option>
+                  ))}
               </select>
             </div>
 
@@ -146,8 +154,22 @@ export function DashboardShell({
                       className="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-50 flex items-center space-x-2 cursor-pointer"
                     >
                       <RotateCcw className="w-3 h-3 text-slate-500" />
-                      <span>Reset Demo Data</span>
+                      <span>{isLiveSupabase ? 'Refresh Data' : 'Reset Demo Data'}</span>
                     </button>
+
+                    {isLiveSupabase && (
+                      <button
+                        onClick={async () => {
+                          setAccountMenuOpen(false);
+                          await signOut();
+                          navigate('/login');
+                        }}
+                        className="w-full text-left px-3 py-2 text-red-700 hover:bg-red-50 flex items-center space-x-2 cursor-pointer border-t border-slate-100"
+                      >
+                        <LogOut className="w-3 h-3" />
+                        <span>Sign Out</span>
+                      </button>
+                    )}
 
                     <Link
                       to="/judge/cq26-table-14-16"

@@ -7,21 +7,49 @@ import { RoleType } from '@/types';
 
 export function LoginPage() {
   const navigate = useNavigate();
-  const { switchUser, availableProfiles } = useAuth();
+  const { switchUser, availableProfiles, isLiveSupabase, signIn } = useAuth();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const handleCustomLogin = (e: React.FormEvent) => {
+  const handleCustomLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Default to organizer for custom login, landing on organizer dashboard
-    switchUser(availableProfiles[0].id, 'organizer');
-    navigate('/organizer');
+    if (!isLiveSupabase) {
+      // Demo mode: default to organizer for custom login, landing on organizer dashboard
+      switchUser(availableProfiles[0].id, 'organizer');
+      navigate('/organizer');
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    try {
+      const role = await signIn(email, password);
+      navigate(`/${role}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleQuickLogin = (profileId: string, targetRole: RoleType) => {
-    switchUser(profileId, targetRole);
-    navigate(`/${targetRole}`);
+  // Live mode: the buttons sign into the seeded demo accounts (supabase/seed.sql, password is public there).
+  const handleQuickLogin = async (profileIndex: number, targetRole: RoleType) => {
+    if (!isLiveSupabase) {
+      switchUser(availableProfiles[profileIndex].id, targetRole);
+      navigate(`/${targetRole}`);
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    try {
+      navigate(`/${await signIn(`${targetRole}@festflow.dev`, 'festflow-demo', targetRole)}`);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sign-in failed');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -39,35 +67,40 @@ export function LoginPage() {
           </p>
         </div>
 
-        {/* Quick Demo Persona Switcher */}
+        {/* Quick demo logins: mock personas, or the seeded demo accounts in live mode */}
+        <>
         <div className="p-4 bg-blue-50/50 border border-blue-100 space-y-2.5">
           <span className="text-[10px] font-mono uppercase font-semibold text-blue-800">
             Select Role to Enter Dashboard:
           </span>
           <div className="grid grid-cols-2 gap-2 text-xs">
             <button
-              onClick={() => handleQuickLogin(availableProfiles[0].id, 'organizer')}
+              onClick={() => handleQuickLogin(0, 'organizer')}
+              disabled={busy}
               className="p-2.5 border border-slate-200 bg-white text-left hover:border-blue-500 hover:bg-blue-50/80 transition-colors cursor-pointer shadow-2xs"
             >
               <div className="font-semibold text-slate-900">Organizer</div>
               <div className="text-[10px] text-blue-600 font-medium">Alex Rivera</div>
             </button>
             <button
-              onClick={() => handleQuickLogin(availableProfiles[1].id, 'volunteer')}
+              onClick={() => handleQuickLogin(1, 'volunteer')}
+              disabled={busy}
               className="p-2.5 border border-slate-200 bg-white text-left hover:border-blue-500 hover:bg-blue-50/80 transition-colors cursor-pointer shadow-2xs"
             >
               <div className="font-semibold text-slate-900">Volunteer</div>
               <div className="text-[10px] text-blue-600 font-medium">Sarah Chen</div>
             </button>
             <button
-              onClick={() => handleQuickLogin(availableProfiles[2].id, 'sponsor')}
+              onClick={() => handleQuickLogin(2, 'sponsor')}
+              disabled={busy}
               className="p-2.5 border border-slate-200 bg-white text-left hover:border-blue-500 hover:bg-blue-50/80 transition-colors cursor-pointer shadow-2xs"
             >
               <div className="font-semibold text-slate-900">Sponsor</div>
               <div className="text-[10px] text-blue-600 font-medium">Elena Rostova</div>
             </button>
             <button
-              onClick={() => handleQuickLogin(availableProfiles[3].id, 'participant')}
+              onClick={() => handleQuickLogin(3, 'participant')}
+              disabled={busy}
               className="p-2.5 border border-slate-200 bg-white text-left hover:border-blue-500 hover:bg-blue-50/80 transition-colors cursor-pointer shadow-2xs"
             >
               <div className="font-semibold text-slate-900">Participant</div>
@@ -81,6 +114,7 @@ export function LoginPage() {
           <span className="flex-shrink mx-3 text-[10px] uppercase text-slate-400 font-mono">Or email sign in</span>
           <div className="flex-grow border-t border-slate-200"></div>
         </div>
+        </>
 
         <form onSubmit={handleCustomLogin} className="space-y-4">
           <Input
@@ -101,8 +135,14 @@ export function LoginPage() {
             required
           />
 
-          <Button type="submit" size="md" className="w-full">
-            Sign In to Dashboard
+          {error && (
+            <div className="p-2.5 text-xs bg-red-50 border border-red-200 text-red-700" role="alert">
+              {error}
+            </div>
+          )}
+
+          <Button type="submit" size="md" className="w-full" disabled={busy}>
+            {busy ? 'Signing in…' : 'Sign In to Dashboard'}
           </Button>
         </form>
 

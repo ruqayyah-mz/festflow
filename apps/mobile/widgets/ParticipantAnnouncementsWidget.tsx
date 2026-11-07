@@ -5,11 +5,13 @@ import { Announcement } from '@festflow/shared';
 interface ParticipantAnnouncementsWidgetProps {
   announcements: Announcement[];
   isMedium?: boolean;
+  eventName?: string;
 }
 
 export function ParticipantAnnouncementsWidget({
   announcements,
   isMedium = true,
+  eventName = 'Official Feed',
 }: ParticipantAnnouncementsWidgetProps) {
   const latest = announcements[0];
   const list = isMedium ? announcements.slice(0, 3) : announcements.slice(0, 1);
@@ -46,7 +48,9 @@ export function ParticipantAnnouncementsWidget({
           style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: '700', color: '#1d4ed8' }}
         />
         <TextWidget
-          text="Official Feed"
+          text={eventName}
+          maxLines={1}
+          truncate="END"
           style={{ fontSize: 9, fontFamily: 'monospace', color: '#64748b' }}
         />
       </FlexWidget>
@@ -69,7 +73,7 @@ export function ParticipantAnnouncementsWidget({
                 borderBottomColor: '#f8fafc',
               }}
               clickAction="OPEN_APP"
-              clickActionData={{ uri: `festflow://announcement/${item.id}` }}
+              clickActionData={{ uri: 'festflow://announcements' }}
             >
               <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
                 <TextWidget

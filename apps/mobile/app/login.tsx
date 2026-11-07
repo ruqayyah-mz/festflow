@@ -11,7 +11,8 @@ import {
 import { router } from 'expo-router';
 import { RoleType } from '@festflow/shared';
 import { MobileStorage, DEMO_PROFILES } from '../src/lib/storage';
-import { registerForPushNotificationsAsync } from '../src/lib/notifications';
+import { isLiveSupabase } from '../src/lib/supabase';
+import { finishSignIn, goHome, signInWithEmail } from '../src/lib/session';
 
 const PERSONAS: { role: RoleType; name: string; title: string; subtitle: string }[] = [
   {
@@ -43,26 +44,48 @@ const PERSONAS: { role: RoleType; name: string; title: string; subtitle: string 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
 
+  // Live builds: one-tap sign-in to the seeded demo accounts (supabase/seed.sql, password is public there).
+  // Demo builds: pick a persona, everything stays on the phone.
   const handleSelectPersona = async (item: typeof PERSONAS[0]) => {
+    if (isLiveSupabase) {
+      setError(null);
+      setBusy(true);
+      try {
+        await signInWithEmail(`${item.role}@festflow.dev`, 'festflow-demo');
+        await goHome();
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Sign-in failed');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
     const profile = DEMO_PROFILES[item.role];
     await MobileStorage.setUser(profile);
     await MobileStorage.setActiveRole(item.role);
     await MobileStorage.setUserRoles(['organizer', 'volunteer', 'sponsor', 'participant']);
-
-    // Register push notification token for this user
-    await registerForPushNotificationsAsync(profile.id);
-
-    router.replace('/(tabs)');
+    await finishSignIn(profile.id);
+    await goHome();
   };
 
   const handleEmailSignIn = async () => {
-    // Default to organizer for manual email demo sign in
-    const profile = DEMO_PROFILES.organizer;
-    await MobileStorage.setUser(profile);
-    await MobileStorage.setActiveRole('organizer');
-    await registerForPushNotificationsAsync(profile.id);
-    router.replace('/(tabs)');
+    if (!isLiveSupabase) {
+      setError('This build has no Supabase keys, so only the demo roles above work.');
+      return;
+    }
+    setError(null);
+    setBusy(true);
+    try {
+      await signInWithEmail(email, password);
+      await goHome();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Sign-in failed');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -78,6 +101,7 @@ export default function LoginScreen() {
         </View>
 
         {/* Quick Persona Selector */}
+        <>
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>SELECT ROLE TO ENTER DASHBOARD:</Text>
           <View style={styles.personaGrid}>
@@ -86,6 +110,7 @@ export default function LoginScreen() {
                 key={item.role}
                 style={styles.personaCard}
                 activeOpacity={0.8}
+                disabled={busy}
                 onPress={() => handleSelectPersona(item)}
               >
                 <View style={styles.personaHeader}>
@@ -105,13 +130,14 @@ export default function LoginScreen() {
           <Text style={styles.dividerText}>OR SIGN IN WITH EMAIL</Text>
           <View style={styles.dividerLine} />
         </View>
+        </>
 
         {/* Manual Form */}
         <View style={styles.formSection}>
           <Text style={styles.inputLabel}>Work Email</Text>
           <TextInput
             style={styles.input}
-            placeholder="organizer@festflow.dev"
+            placeholder="volunteer@festflow.dev"
             placeholderTextColor="#94a3b8"
             keyboardType="email-address"
             autoCapitalize="none"
@@ -129,12 +155,15 @@ export default function LoginScreen() {
             onChangeText={setPassword}
           />
 
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
           <TouchableOpacity
-            style={styles.signInButton}
+            style={[styles.signInButton, busy && { opacity: 0.6 }]}
             activeOpacity={0.85}
             onPress={handleEmailSignIn}
+            disabled={busy}
           >
-            <Text style={styles.signInButtonText}>Sign In to Workspace</Text>
+            <Text style={styles.signInButtonText}>{busy ? 'Signing in…' : 'Sign In'}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -268,6 +297,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     alignItems: 'center',
     marginTop: 14,
+  },
+  errorText: {
+    fontSize: 12,
+    color: '#b91c1c',
+    marginTop: 10,
   },
   signInButtonText: {
     color: '#ffffff',

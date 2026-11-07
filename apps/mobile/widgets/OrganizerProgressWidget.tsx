@@ -5,14 +5,12 @@ interface OrganizerProgressWidgetProps {
   eventName: string;
   completedTasks: number;
   totalTasks: number;
-  participantCount: number;
 }
 
 export function OrganizerProgressWidget({
   eventName,
   completedTasks,
   totalTasks,
-  participantCount,
 }: OrganizerProgressWidgetProps) {
   const percent = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
 
@@ -30,16 +28,16 @@ export function OrganizerProgressWidget({
         justifyContent: 'space-between',
       }}
       clickAction="OPEN_APP"
-      clickActionData={{ uri: 'festflow://organizer/overview' }}
+      clickActionData={{ uri: 'festflow://tasks' }}
     >
       {/* Header */}
       <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <TextWidget
-          text="ORGANIZER OVERVIEW"
+          text="EVENT PROGRESS"
           style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: '700', color: '#1d4ed8' }}
         />
         <TextWidget
-          text={`${participantCount} hackers`}
+          text={`${totalTasks - completedTasks} left`}
           style={{ fontSize: 9, fontFamily: 'monospace', fontWeight: '600', color: '#0f172a' }}
         />
       </FlexWidget>
@@ -52,10 +50,10 @@ export function OrganizerProgressWidget({
       />
 
       {/* Progress Metric & Bar */}
-      <FlexWidget style={{ flexDirection: 'column', width: '100%' }}>
+      <FlexWidget style={{ flexDirection: 'column', width: 'match_parent' }}>
         <FlexWidget style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 }}>
           <TextWidget
-            text="Milestone Tasks"
+            text="My tasks done"
             style={{ fontSize: 10, color: '#64748b' }}
           />
           <TextWidget
@@ -68,24 +66,26 @@ export function OrganizerProgressWidget({
         <FlexWidget
           style={{
             height: 6,
-            width: '100%',
+            width: 'match_parent',
             backgroundColor: '#e2e8f0',
             flexDirection: 'row',
           }}
         >
+          {/* Widgets don't support % widths: split the bar with flex weights instead */}
           <FlexWidget
             style={{
               height: 6,
-              width: `${Math.max(5, Math.min(100, percent))}%`,
+              flex: Math.max(5, Math.min(100, percent)),
               backgroundColor: '#1d4ed8',
             }}
           />
+          <FlexWidget style={{ height: 6, flex: Math.max(0, 100 - Math.max(5, Math.min(100, percent))) }} />
         </FlexWidget>
       </FlexWidget>
 
       {/* Footer */}
       <TextWidget
-        text="Tap to manage event console"
+        text="Tap to open your tasks"
         style={{ fontSize: 9, fontFamily: 'monospace', color: '#94a3b8' }}
       />
     </FlexWidget>

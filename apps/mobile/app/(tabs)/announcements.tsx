@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   SafeAreaView,
 } from 'react-native';
 import { Announcement, RoleType } from '@festflow/shared';
-import { MobileStorage } from '../../src/lib/storage';
+import { MobileStorage, onActiveEventChange } from '../../src/lib/storage';
+import { postAnnouncement, syncAnnouncements } from '../../src/lib/events';
 import { refreshAllWidgets } from '../../widgets/widgetManager';
 import { Send, BellRing } from 'lucide-react-native';
 
@@ -20,32 +21,39 @@ export default function AnnouncementsScreen() {
   const [newMessage, setNewMessage] = useState('');
   const [audience, setAudience] = useState<'all' | 'participants' | 'volunteers' | 'sponsors'>('all');
   const [isPosting, setIsPosting] = useState(false);
+  const [eventId, setEventId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
-  useEffect(() => {
-    async function loadData() {
-      const activeRole = await MobileStorage.getActiveRole();
-      setRole(activeRole);
-      const list = await MobileStorage.getAnnouncements();
-      setAnnouncements(list);
+  const loadData = useCallback(async () => {
+    setRole(await MobileStorage.getActiveRole());
+    const id = (await MobileStorage.getEvent())?.id ?? null;
+    setEventId(id);
+    const cached = await MobileStorage.getAnnouncements();
+    setAnnouncements(id ? cached.filter((a) => a.event_id === id) : []);
+    if (!id) return;
+    try {
+      setAnnouncements(await syncAnnouncements(id));
+      setNotice(null);
+    } catch {
+      setNotice('Offline. Showing saved announcements.');
     }
-    loadData();
   }, []);
 
+  useEffect(() => {
+    loadData();
+    return onActiveEventChange(loadData);
+  }, [loadData]);
+
   const handlePost = async () => {
-    if (!newTitle.trim() || !newMessage.trim()) return;
+    if (!newTitle.trim() || !newMessage.trim() || !eventId) return;
 
-    const newAnc: Announcement = {
-      id: `anc-${Date.now()}`,
-      event_id: 'e0000000-0000-0000-0000-000000000001',
-      audience,
-      title: newTitle.trim(),
-      message: newMessage.trim(),
-      created_at: new Date().toISOString(),
-    };
-
-    const updated = [newAnc, ...announcements];
-    setAnnouncements(updated);
-    await MobileStorage.setAnnouncements(updated);
+    try {
+      await postAnnouncement({ event_id: eventId, audience, title: newTitle.trim(), message: newMessage.trim() });
+    } catch (e) {
+      setNotice(e instanceof Error ? e.message : 'Could not post announcement');
+      return;
+    }
+    await loadData();
     await refreshAllWidgets();
 
     setNewTitle('');
@@ -123,6 +131,11 @@ export default function AnnouncementsScreen() {
           <BellRing size={16} color="#1d4ed8" />
           <Text style={styles.feedHeaderTitle}>LIVE EVENT FEED</Text>
         </View>
+
+        {notice ? <Text style={styles.timestamp}>{notice}</Text> : null}
+        {announcements.length === 0 ? (
+          <Text style={styles.cardMessage}>No announcements for this event yet.</Text>
+        ) : null}
 
         {announcements.map((item) => (
           <View key={item.id} style={styles.announcementCard}>

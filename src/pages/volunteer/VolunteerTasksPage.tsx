@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { mockStorage } from '@/lib/mockStorage';
 import { Task } from '@/types';
 import { EmptyState } from '@/components/EmptyState';
+import { PushNotificationsCard } from '@/components/volunteer/PushNotificationsCard';
 import { formatDate } from '@/lib/utils';
 import { Clock, CheckCircle2, Award } from 'lucide-react';
 
@@ -46,6 +47,8 @@ export function VolunteerTasksPage() {
 
   return (
     <div className="space-y-6">
+      <PushNotificationsCard />
+
       <div className="flex items-center justify-end text-xs font-mono">
         <span className="px-2.5 py-1 bg-blue-50 border border-blue-200 text-blue-800 font-bold">
           {completedTasks.length} / {volunteerTasks.length} Done (

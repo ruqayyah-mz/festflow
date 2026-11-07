@@ -40,6 +40,33 @@ import { getParticipation, validateRounds, validateTeamSize, getRegistrationStat
 
 type Listener = () => void;
 
+/**
+ * Write-through target for task changes when a live Supabase backend is connected (see liveSync.ts).
+ * mockStorage applies the change locally first (instant UI), then hands it to the backend. The backend
+ * re-pulls server truth if the write is rejected.
+ */
+export interface TaskBackend {
+  createTask(task: Task): void;
+  updateTaskStatus(taskId: string, status: Task['status']): void;
+  claimTask(taskId: string): void;
+  releaseTask(taskId: string): void;
+  verifyTask(taskId: string): void;
+  deleteTask(taskId: string): void;
+  createAnnouncement(announcement: Announcement): void;
+  saveEvent(event: Event, isNew: boolean): void;
+  submitVolunteerApplication(app: VolunteerApplication): void;
+  decideVolunteerApplication(appId: string, status: 'accepted' | 'rejected'): void;
+}
+
+export interface LiveSnapshot {
+  profiles: Profile[];
+  events: Event[];
+  roles: Role[];
+  tasks: Task[];
+  announcements: Announcement[];
+  volunteerApplications: VolunteerApplication[];
+}
+
 // Millisecond timestamps alone collide when two records are created in the same tick.
 const uid = (prefix: string) => `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`;
 
@@ -47,11 +74,12 @@ class MockStorage {
   private listeners: Set<Listener> = new Set();
   private currentUser: Profile;
   private currentRole: RoleType;
+  private taskBackend: TaskBackend | null = null;
 
   constructor() {
     this.initStorage();
-    const storedUser = localStorage.getItem('festflow_current_user');
-    const storedRole = localStorage.getItem('festflow_current_role');
+    const storedUser = sessionStorage.getItem('festflow_current_user');
+    const storedRole = sessionStorage.getItem('festflow_current_role');
 
     this.currentUser = storedUser ? JSON.parse(storedUser) : INITIAL_PROFILES[0];
     this.currentRole = (storedRole as RoleType) || 'organizer';
@@ -114,6 +142,36 @@ class MockStorage {
     this.listeners.forEach((l) => l());
   }
 
+  // --- Live backend bridge (Supabase). Unused in demo mode. ---
+  public setTaskBackend(backend: TaskBackend | null) {
+    this.taskBackend = backend;
+  }
+
+  /** Replace the locally cached events/roles/profiles/tasks with server data. */
+  public applyLiveSnapshot(snapshot: LiveSnapshot) {
+    localStorage.setItem('festflow_profiles', JSON.stringify(snapshot.profiles));
+    localStorage.setItem('festflow_events', JSON.stringify(snapshot.events));
+    localStorage.setItem('festflow_roles', JSON.stringify(snapshot.roles));
+    localStorage.setItem('festflow_tasks', JSON.stringify(snapshot.tasks));
+    localStorage.setItem('festflow_announcements', JSON.stringify(snapshot.announcements));
+    localStorage.setItem('festflow_volunteer_apps', JSON.stringify(snapshot.volunteerApplications));
+    this.notify();
+  }
+
+  public applyLiveTasks(tasks: Task[]) {
+    localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.notify();
+  }
+
+  /** Signed-in Supabase user (no persona switching in live mode). */
+  public setLiveUser(profile: Profile, role: RoleType) {
+    this.currentUser = profile;
+    this.currentRole = role;
+    sessionStorage.setItem('festflow_current_user', JSON.stringify(profile));
+    sessionStorage.setItem('festflow_current_role', role);
+    this.notify();
+  }
+
   public resetToDefaults() {
     localStorage.removeItem('festflow_events');
     localStorage.removeItem('festflow_profiles');
@@ -135,8 +193,8 @@ class MockStorage {
     this.initStorage();
     this.currentUser = INITIAL_PROFILES[0];
     this.currentRole = 'organizer';
-    localStorage.setItem('festflow_current_user', JSON.stringify(this.currentUser));
-    localStorage.setItem('festflow_current_role', 'organizer');
+    sessionStorage.setItem('festflow_current_user', JSON.stringify(this.currentUser));
+    sessionStorage.setItem('festflow_current_role', 'organizer');
     this.notify();
   }
 
@@ -268,8 +326,8 @@ class MockStorage {
     const found = profiles.find((p) => p.id === profileId) || profiles[0];
     this.currentUser = found;
     this.currentRole = role;
-    localStorage.setItem('festflow_current_user', JSON.stringify(this.currentUser));
-    localStorage.setItem('festflow_current_role', role);
+    sessionStorage.setItem('festflow_current_user', JSON.stringify(this.currentUser));
+    sessionStorage.setItem('festflow_current_role', role);
     this.notify();
   }
 
@@ -337,7 +395,7 @@ class MockStorage {
     const events = this.getEvents(true);
     const newEvent: Event = {
       ...eventData,
-      id: uid('evt'),
+      id: this.taskBackend ? crypto.randomUUID() : uid('evt'),
       created_at: new Date().toISOString(),
       deleted_at: null,
     };
@@ -355,6 +413,7 @@ class MockStorage {
       created_at: new Date().toISOString(),
     });
     localStorage.setItem('festflow_roles', JSON.stringify(roles));
+    this.taskBackend?.saveEvent(newEvent, true);
 
     this.notify();
     return newEvent;
@@ -379,6 +438,7 @@ class MockStorage {
     }
     events[index] = merged;
     localStorage.setItem('festflow_events', JSON.stringify(events));
+    this.taskBackend?.saveEvent(merged, false);
     this.notify();
     return events[index];
   }
@@ -389,6 +449,7 @@ class MockStorage {
     if (index !== -1) {
       events[index].deleted_at = new Date().toISOString();
       localStorage.setItem('festflow_events', JSON.stringify(events));
+      this.taskBackend?.saveEvent(events[index], false);
       this.notify();
     }
   }
@@ -503,11 +564,13 @@ class MockStorage {
     const tasks = this.getTasks();
     const newTask: Task = {
       ...taskData,
-      id: uid('tsk'),
+      // Supabase ids are UUIDs; demo ids keep the readable prefix.
+      id: this.taskBackend ? crypto.randomUUID() : uid('tsk'),
       created_at: new Date().toISOString(),
     };
     tasks.unshift(newTask);
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.createTask(newTask);
     if (newTask.assignee_id && newTask.assignee_type === 'volunteer') {
       this.pushNotification(
         newTask.assignee_id,
@@ -537,6 +600,7 @@ class MockStorage {
       tasks[index].completed_at = null;
     }
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.updateTaskStatus(taskId, status);
     this.notify();
     return tasks[index];
   }
@@ -556,6 +620,7 @@ class MockStorage {
     task.assignee_name = this.currentUser.full_name;
     task.claimed_at = new Date().toISOString();
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.claimTask(taskId);
     this.notify();
     return task;
   }
@@ -572,6 +637,7 @@ class MockStorage {
     task.claimed_at = null;
     task.status = 'todo';
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.releaseTask(taskId);
     this.notify();
     return task;
   }
@@ -584,6 +650,7 @@ class MockStorage {
     if (task.status !== 'done') throw new Error('Only completed tasks can be verified');
     task.verified_at = new Date().toISOString();
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.verifyTask(taskId);
     if (task.assignee_id) {
       this.pushNotification(task.assignee_id, `Organizer verified your task: ${task.title}`, `/volunteer/events/${task.event_id}`);
     }
@@ -596,6 +663,7 @@ class MockStorage {
     let tasks = this.getTasks();
     tasks = tasks.filter((t) => t.id !== taskId);
     localStorage.setItem('festflow_tasks', JSON.stringify(tasks));
+    this.taskBackend?.deleteTask(taskId);
     this.notify();
   }
 
@@ -615,11 +683,12 @@ class MockStorage {
     const list: Announcement[] = JSON.parse(localStorage.getItem('festflow_announcements') || '[]');
     const newAnc: Announcement = {
       ...announcementData,
-      id: uid('anc'),
+      id: this.taskBackend ? crypto.randomUUID() : uid('anc'),
       created_at: new Date().toISOString(),
     };
     list.unshift(newAnc);
     localStorage.setItem('festflow_announcements', JSON.stringify(list));
+    this.taskBackend?.createAnnouncement(newAnc);
 
     // Ping everyone in the audience (organizers excluded) with a link to the event's announcements.
     const eventId = newAnc.event_id;
@@ -1256,7 +1325,7 @@ class MockStorage {
   // --- Volunteer Applications ---
   public getVolunteerApplications(eventId?: string): VolunteerApplication[] {
     let raw: VolunteerApplication[] = JSON.parse(localStorage.getItem('festflow_volunteer_apps') || '[]');
-    if (raw.length === 0 && (!localStorage.getItem('festflow_volunteer_apps') || localStorage.getItem('festflow_volunteer_apps') === '[]')) {
+    if (!this.taskBackend && raw.length === 0 && (!localStorage.getItem('festflow_volunteer_apps') || localStorage.getItem('festflow_volunteer_apps') === '[]')) {
       raw = INITIAL_VOLUNTEER_APPS;
       localStorage.setItem('festflow_volunteer_apps', JSON.stringify(raw));
     }
@@ -1289,7 +1358,7 @@ class MockStorage {
     if (existing) return existing;
 
     const newApp: VolunteerApplication = {
-      id: uid('vapp'),
+      id: this.taskBackend ? crypto.randomUUID() : uid('vapp'),
       event_id: eventId,
       user_id: this.currentUser.id,
       user_name: this.currentUser.full_name,
@@ -1301,6 +1370,7 @@ class MockStorage {
     };
     apps.unshift(newApp);
     localStorage.setItem('festflow_volunteer_apps', JSON.stringify(apps));
+    this.taskBackend?.submitVolunteerApplication(newApp);
     this.notify();
     return newApp;
   }
@@ -1317,6 +1387,7 @@ class MockStorage {
     if (status === 'accepted') this.assertCanVolunteer(app.event_id, app.user_id); // may have joined a team since applying
     app.status = status;
     localStorage.setItem('festflow_volunteer_apps', JSON.stringify(apps));
+    this.taskBackend?.decideVolunteerApplication(appId, status); // server also adds the volunteer role
 
     if (status === 'accepted') {
       const roles: Role[] = JSON.parse(localStorage.getItem('festflow_roles') || '[]');

@@ -7,7 +7,7 @@ export function filterAnnouncementsForRole(
 ): Announcement[] {
   if (role === 'all') return announcements;
   return announcements.filter(
-    (a) => a.audience === 'all' || a.audience === role || (role === 'participant' && a.audience === 'participants') || (role === 'volunteer' && a.audience === 'volunteers') || (role === 'sponsor' && a.audience === 'sponsors')
+    (a) => a.audience === 'all' || (role === 'participant' && a.audience === 'participants') || (role === 'volunteer' && a.audience === 'volunteers') || (role === 'sponsor' && a.audience === 'sponsors')
   );
 }
 

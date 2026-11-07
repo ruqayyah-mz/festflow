@@ -13,3 +13,6 @@ apps/mobile/build/
 *.log
 .DS_Store
 Thumbs.db
+
+# Supabase CLI local cache (project ref, DB pooler address)
+**/supabase/.temp/
